@@ -13,19 +13,23 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
+import uuid
+import json
 from nacl.public import PublicKey, PrivateKey, SealedBox
 
-with open("./private.key", "rb") as f:
-    priv_byte = f.read()
-    with open("./public.key", "rb") as pubf:
-        pubf_byte = pubf.read()
-        public_key = PublicKey(pubf_byte)
-        private_key = PrivateKey(priv_byte)
-        test_message = "This a test message!"
-        sealed_box = SealedBox(public_key)
-        encrypted_text = sealed_box.encrypt(bytes(test_message,"utf-8"))
-        unseal = SealedBox(private_key)
-
-        result = unseal.decrypt(encrypted_text)
-        print(result.decode("utf-8"))
-
+with open("./public.key", "rb") as pubf:
+    pubf_byte = pubf.read()
+    public_key = PublicKey(pubf_byte)
+    input_command = input("Please input the desired command\n")
+    action_list = {}
+    action_list["action"] = input_command
+    action_list["id"] = str(uuid.uuid4())
+    json_str = json.dumps(action_list)
+    print(json_str)
+    sealed_box = SealedBox(public_key)
+    encrypted_text = sealed_box.encrypt(bytes(json_str,"utf-8"))
+    file_name = input("Please input what you want the action file to be called.\n")
+    f = open('./' + file_name, 'wb')
+    encrypt_bytes = bytes(encrypted_text)
+    f.write(encrypt_bytes)
+    f.close()
