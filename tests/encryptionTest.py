@@ -1,5 +1,6 @@
 import pytest
 # unit test case
+import os
 import unittest
 from nacl.public import PublicKey, PrivateKey, SealedBox
 
@@ -13,16 +14,16 @@ class TestStringMethods(unittest.TestCase):
         private_bytes = bytes(private)
         public_bytes = bytes(public)
 
-        f = open('./private.key', 'wb')
+        f = open(os.path.join(os.getcwd(), 'private.key'), 'wb')
         f.write(private_bytes)
         f.close()
 
-        f = open('./public.key', 'wb')
+        f = open(os.path.join(os.getcwd(),'public.key'), 'wb')
         f.write(public_bytes)
         f.close()
-        with open("./private.key", "rb") as f:
+        with open(os.path.join(os.getcwd(), "private.key"), "rb") as f:
             priv_byte = f.read()
-            with open("./public.key", "rb") as pubf:
+            with open(os.path.join(os.getcwd(), "public.key"), "rb") as pubf:
                 pubf_byte = pubf.read()
                 public_key = PublicKey(pubf_byte)
                 private_key = PrivateKey(priv_byte)
