@@ -21,26 +21,34 @@ import subprocess
 from nacl.public import PrivateKey, SealedBox
 from errite.arraytools.parameterMaker import makeParameterArray
 
-print("Unlocke Main Component V1.0")
+print("Unlocke Main Component V1.0.3")
 configData = None
+globalData = None
 doContinue = True
-if os.path.exists("./config.json"):
-    with open("./config.json", "r") as jsonFile:
+globalsMissing = False
+if os.path.exists(os.path.join(os.getcwd(), "globals.json")):
+    with open(os.path.join(os.getcwd(), "globals.json"), "r") as globalJson:
+        globalData = json.load(globalJson)
+        global_root = globalData["main-home"]
+if os.path.exists(os.path.join(global_root, "config.json")):
+    with open(os.path.join(global_root, "config.json"), "r") as jsonFile:
         configData = json.load(jsonFile)
-elif not os.path.exists("./config.json"):
-    print("Warning! Config file is mpt present, use configurator to create a config file. ")
+elif not os.path.exists(os.path.join(global_root, "config.json")):
+    print("Warning! Config file is not present, use configurator to create a config file. ")
     doContinue = False
-if doContinue:
+if not os.path.exists(os.path.join(os.getcwd(), "globals.json")):
+    globalsMissing = True
+if doContinue or not globalsMissing:
     noError = True
     try:
         c = urllib3.PoolManager()
         url = configData["download"]
-        with open("./private.key", "rb") as f:
+        with open(os.path.join(global_root,"private.key"), "rb") as f:
             while noError:
-                with c.request('GET', url, preload_content=False) as resp, open("main.action", 'wb') as out_file:
+                with c.request('GET', url, preload_content=False) as resp, open(os.path.join(global_root,"main.action"), 'wb') as out_file:
                     shutil.copyfileobj(resp, out_file)
                 resp.release_conn()
-                with open("./main.action", "rb") as actionF:
+                with open(os.path.join(global_root,"main.action"), "rb") as actionF:
                     priv_byte = f.read()
                     action_byte = actionF.read()
                     private_key = PrivateKey(priv_byte)
@@ -54,22 +62,22 @@ if doContinue:
                     if configData["ignore-next"].lower() == "y":
                         configData["last-id"] = results["id"]
                         json_str = json.dumps(configData)
-                        f = open('./' + "config.json", 'wb')
+                        f = open(os.path.join(global_root, "config.json", 'wb'))
                         encrypt_bytes = bytes(json_str, encoding="utf-8")
                         f.write(encrypt_bytes)
                         f.close()
-                        os.remove("./main.action")
+                        os.remove(os.path.join(global_root,"main.action"))
                     elif not configData["last-id"] == results["id"]:
                         end_len:int = len(cmd_array)
                         subprocess.run(cmd, shell=True)
                         configData["last-id"] = results["id"]
                         json_str = json.dumps(configData)
-                        f = open('./' + "config.json", 'wb')
+                        f = open(os.path.join(global_root, "config.json"), 'wb')
                         encrypt_bytes = bytes(json_str, encoding="utf-8")
                         f.write(encrypt_bytes)
                         f.close()
-                        os.remove("./main.action")
+                        os.remove(os.path.join(global_root,"main.action"))
                     time.sleep(900)
     except Exception as ex:
         noError = False
-        print("Exiting from application due to hit exception! " + ex.args[0])
+        print(str(ex))
